@@ -5,24 +5,37 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Meu Assistente</title>
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
-    main { max-width: 860px; margin: 0 auto; }
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
-    h1 { font-size: 20px; margin: 0; }
-    #chat { display: flex; flex-direction: column; gap: 8px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; min-height: 280px; }
-    .bubble { padding: 12px 14px; border-radius: 12px; margin: 2px 0; line-height: 1.5; white-space: pre-wrap; }
-    .user { background: #eef2ff; align-self: flex-end; }
-    .assistant { background: #f1f5f9; }
-    .typing { opacity: 0.7; font-style: italic; }
-    .row { display: flex; gap: 8px; margin-top: 12px; }
-    input { flex: 1; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font: inherit; }
-    button { padding: 12px 16px; border: 0; border-radius: 10px; background: black; color: white; cursor: pointer; font: inherit; }
-    small { opacity: .7; }
-    .toolbar { display: flex; gap: 8px; align-items: center; }
-    .muted { opacity: .75; }
-    .pill { padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 999px; }
-  </style>
+  /* base */
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+  main { max-width: 860px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
+  h1 { font-size: 20px; margin: 0; }
+  #chat { display: flex; flex-direction: column; gap: 8px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; min-height: 280px; }
+  .bubble { padding: 12px 14px; border-radius: 12px; margin: 2px 0; line-height: 1.5; white-space: pre-wrap; }
+  .user { background: #eef2ff; color: #111; }
+  .assistant { background: #f1f5f9; color: #111; }
+  .typing { opacity: 0.7; font-style: italic; }
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  input { flex: 1; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font: inherit; }
+  input::placeholder { color: #9ca3af; }
+  button { padding: 12px 16px; border: 0; border-radius: 10px; background: black; color: white; cursor: pointer; font: inherit; }
+  small { opacity: .7; }
+  .toolbar { display: flex; gap: 8px; align-items: center; }
+  .muted { opacity: .75; }
+  .pill { padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 999px; }
+
+  /* modo escuro: bolhas e inputs ficam escuros e o texto claro */
+  @media (prefers-color-scheme: dark) {
+    body { background: #0b0f12; color: #e5e7eb; }
+    #chat { border-color: #374151; }
+    .assistant { background: #1f2937; color: #f9fafb; }
+    .user { background: #374151; color: #f9fafb; }
+    input { background: #111827; color: #f9fafb; border-color: #374151; }
+    button { background: #2563eb; color: #fff; }
+    .pill { border-color: #374151; }
+  }
+</style>
+
 </head>
 <body>
   <main>
