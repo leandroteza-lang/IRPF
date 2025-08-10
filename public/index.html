@@ -24,7 +24,7 @@
   .muted { opacity: .75; }
   .pill { padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 999px; }
 
-  /* modo escuro: bolhas e inputs ficam escuros e o texto claro */
+  /* modo escuro */
   @media (prefers-color-scheme: dark) {
     body { background: #0b0f12; color: #e5e7eb; }
     #chat { border-color: #374151; }
@@ -34,18 +34,17 @@
     button { background: #2563eb; color: #fff; }
     .pill { border-color: #374151; }
   }
-</style>
-
+  </style>
 </head>
 <body>
   <main>
     <header>
-    <div class="toolbar">
-      <span id="threadBadge" class="pill muted">sem thread</span>
-      <button id="reset">Nova conversa</button>
-      <button id="clear">Limpar conversa</button>
-    </div>
-
+      <h1>IRPF – Tira Dúvidas</h1>
+      <div class="toolbar">
+        <span id="threadBadge" class="pill muted">sem thread</span>
+        <button id="reset">Nova conversa</button>
+        <button id="clear">Limpar conversa</button>
+      </div>
     </header>
 
     <div id="chat"></div>
@@ -133,9 +132,19 @@
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
+
+    // Nova conversa: zera o contexto (novo thread na próxima mensagem)
     resetBtn.addEventListener('click', () => {
       clearThreadId();
       addBubble('🔄 Nova conversa iniciada.', 'assistant');
+      input.focus();
+    });
+
+    // Limpar conversa: apenas limpa a tela (não mexe no contexto)
+    clearBtn.addEventListener('click', () => {
+      chat.innerHTML = '';
+      addBubble('🧹 Conversa limpa.', 'assistant');
+      input.focus();
     });
 
     // Init badge
