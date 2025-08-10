@@ -123,10 +123,10 @@ const mustShow = (noticeMode === "always" || fromBase);
 
 if (mustShow) {
   const banner =
-    "**********************************************************************\n" +
+    "***********************************************************************************************\n" +
     "ATENÇÃO: Informações geradas a partir do MANUAL DE PERGUNTAS E RESPOSTAS IRPF 2025.\n" +
     "ATENÇÃO: Para correta interpretação, CONSULTE seu contador LEANDRO TEZA.\n" +
-    "**********************************************************************\n\n";
+    "***********************************************************************************************\n\n";
   reply = banner + reply; // <-- banner no INÍCIO
 }
 
