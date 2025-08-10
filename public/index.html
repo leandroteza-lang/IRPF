@@ -40,11 +40,12 @@
 <body>
   <main>
     <header>
-      <h1>Chat com IRPF - Tire Dúvidas</h1>
-      <div class="toolbar">
-        <span id="threadBadge" class="pill muted">sem thread</span>
-        <button id="reset">Nova conversa</button>
-      </div>
+    <div class="toolbar">
+      <span id="threadBadge" class="pill muted">sem thread</span>
+      <button id="reset">Nova conversa</button>
+      <button id="clear">Limpar conversa</button>
+    </div>
+
     </header>
 
     <div id="chat"></div>
@@ -62,6 +63,7 @@
     const input = document.getElementById('msg');
     const btn = document.getElementById('send');
     const resetBtn = document.getElementById('reset');
+    const clearBtn = document.getElementById('clear');
     const badge = document.getElementById('threadBadge');
 
     function getThreadId() { return localStorage.getItem('thread_id') || null; }
