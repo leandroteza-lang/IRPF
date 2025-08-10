@@ -119,9 +119,17 @@ export default async function handler(req, res) {
     }
 
     // 6) Avisos — modo 'auto' (quando veio da base) ou 'always' (sempre)
-    if (noticeMode === "always" || fromBase) {
-      reply += "\n\nATENÇÃO: Informações geradas a partir do MANUAL DE PERGUTAS E RESPOSTAS IRPF 2025.\nATENÇÃO: Para correta interpreteção, CONSULTE seu contador LEANDRO TEZA";
-    }
+const mustShow = (noticeMode === "always" || fromBase);
+
+if (mustShow) {
+  const banner =
+    "**********************************************************************\n" +
+    "ATENÇÃO: Informações geradas a partir do MANUAL DE PERGUNTAS E RESPOSTAS IRPF 2025.\n" +
+    "ATENÇÃO: Para correta interpretação, CONSULTE seu contador LEANDRO TEZA.\n" +
+    "**********************************************************************\n\n";
+  reply = banner + reply; // <-- banner no INÍCIO
+}
+
 
     return res.status(200).json({ reply, threadId, status, contentItems, fromBase, noticeMode });
   } catch (err) {
