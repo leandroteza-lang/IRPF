@@ -1,6 +1,4 @@
-// api/chat.js - Vercel Serverless Function (Node 18+)
-// Threads separados por usuário + AVISO quando a resposta usar arquivo (base)
-// Modo do aviso: auto (só quando há file_citation) ou always (sempre), via env SHOW_BASE_NOTICE
+// api/chat.js — Vercel Serverless (Node 20+), ESM
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -8,16 +6,16 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.OPENAI_API_KEY;
   const assistantId = process.env.OPENAI_ASSISTANT_ID || "asst_br9GQ4dRE2jDg9nLzSGyiLPG";
-  const noticeMode = (process.env.SHOW_BASE_NOTICE || "auto").toLowerCase(); // "auto" | "always"
 
   if (!apiKey || !assistantId) {
     return res.status(500).json({ error: "Missing OPENAI_API_KEY or OPENAI_ASSISTANT_ID" });
   }
 
   try {
-    const body = JSON.parse(req.body || "{}");
+    const bodyText = req.body || "{}";
+    const body = typeof bodyText === "string" ? JSON.parse(bodyText) : (bodyText || {});
     const userMessage = (body.message || "").toString();
-    let clientThreadId = (body.threadId || "").toString() || null;
+    const clientThreadId = (body.threadId || "").toString() || null;
 
     if (!userMessage) {
       return res.status(400).json({ error: "message is required" });
@@ -30,7 +28,7 @@ export default async function handler(req, res) {
       "OpenAI-Beta": "assistants=v2"
     };
 
-    // 1) Thread (cria se não vier do cliente)
+    // 1) Thread
     let threadId = clientThreadId;
     if (!threadId) {
       const threadRes = await fetch(`${base}/threads`, { method: "POST", headers });
@@ -75,11 +73,12 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Run failed", details: checkData });
       }
     }
+
     if (status !== "completed") {
       return res.status(202).json({ status, threadId, info: "Run not completed yet. Try again." });
     }
 
-    // 5) Última mensagem do assistente
+    // 5) Mensagem do assistente
     const listRes = await fetch(`${base}/threads/${threadId}/messages?order=desc&limit=10`, {
       method: "GET",
       headers
@@ -91,47 +90,17 @@ export default async function handler(req, res) {
 
     let reply = "Sem resposta";
     let contentItems = [];
-    let fromBase = false; // vira true se houver qualquer file_citation
-
     if (Array.isArray(listData.data)) {
       const assistantMsg = listData.data.find(m => m.role === "assistant");
       if (assistantMsg && Array.isArray(assistantMsg.content)) {
         contentItems = assistantMsg.content;
-
         const textItem = assistantMsg.content.find(c => c.type === "text");
         if (textItem?.text?.value) reply = textItem.text.value;
-
-        // Detecta citations de arquivo
-        const textBlocks = assistantMsg.content.filter(c => c.type === "text");
-        for (const block of textBlocks) {
-          const anns = (block?.text?.annotations) || [];
-          if (anns.some(a => a?.type === "file_citation")) {
-            fromBase = true;
-            break;
-          }
-        }
-
-        // fallback: algumas libs rendem marcadores no texto (ex.: 【...】)
-        if (!fromBase && /【.+】/.test(reply)) {
-          fromBase = true;
-        }
       }
     }
 
-    // 6) Avisos — modo 'auto' (quando veio da base) ou 'always' (sempre)
-const mustShow = (noticeMode === "always" || fromBase);
-
-/*if (mustShow) {
-  const banner =
-    "***********************************************************************************************\n" +
-    "ATENÇÃO: Informações geradas a partir do MANUAL DE PERGUNTAS E RESPOSTAS IRPF 2025.\n" +
-    "ATENÇÃO: Para correta interpretação, CONSULTE seu contador LEANDRO TEZA.\n" +
-    "***********************************************************************************************\n\n";
-  reply = banner + reply; // <-- banner no INÍCIO
-}
-
-
-    return res.status(200).json({ reply, threadId, status, contentItems, fromBase, noticeMode });
+    // Banner desativado por padrão. Para ativar, mude SHOW_BASE_NOTICE para "always" ou implemente a detecção.
+    return res.status(200).json({ reply, threadId, status, contentItems });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Internal error", details: String(err?.message || err) });
