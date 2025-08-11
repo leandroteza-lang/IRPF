@@ -6,30 +6,28 @@ export default async function handler(req, res) {
   const base = "https://api.openai.com/v1";
   const headers = {
     Authorization: `Bearer ${apiKey}`,
-    "OpenAI-Beta": "assistants=v2" // <-- necessário para Threads/Messages (v2)
+    "OpenAI-Beta": "assistants=v2" // obrigatório p/ Assistants v2
   };
 
-  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  const host = req.headers["x-forwarded-host"] || req.headers.host || "";
   const proto = req.headers["x-forwarded-proto"] || "https";
   const site = `${proto}://${host}`;
 
-  // POST: retorna a URL pronta para compartilhar (não chama a OpenAI)
+  // POST: devolve a URL pronta de compartilhar
   if (req.method === "POST") {
     const bodyText = req.body || "{}";
     const body = typeof bodyText === "string" ? JSON.parse(bodyText) : (bodyText || {});
     const threadId = (body.threadId || "").toString();
     if (!threadId) return res.status(400).json({ error: "threadId is required" });
-
     return res.status(200).json({ url: `${site}/api/share?tid=${encodeURIComponent(threadId)}` });
   }
 
-  // GET: renderiza HTML com a última resposta do assistente naquele thread
+  // GET: renderiza HTML com a última resposta do assistente
   if (req.method === "GET") {
     const urlObj = new URL(req.url, site);
     const tid = (urlObj.searchParams.get("tid") || "").toString();
     if (!tid) return html(res, 400, "<p>Parâmetro 'tid' é obrigatório.</p>");
 
-    // Busca as mensagens (ordem desc, pega a última resposta do assistente)
     const r = await fetch(`${base}/threads/${tid}/messages?order=desc&limit=10`, { headers });
     const data = await r.json();
     if (!r.ok) {
@@ -57,8 +55,18 @@ export default async function handler(req, res) {
     res.end(`<!doctype html><meta charset="utf-8"><style>
       body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;background:#0b0f12;color:#e5e7eb}
       .card{max-width:860px;margin:0 auto;border:1px solid #374151;border-radius:12px;padding:16px;background:#111827}
-      pre{white-space:pre-wrap;line-height:1.55}
-      @media (prefers-color-scheme: light){body{background:#fff;color:#111}.card{background:#f8fafc;border-color:#e2e8f0}}
+      pre{
+        white-space: pre-line;     /* permite justificar mantendo quebras */
+        word-wrap: break-word;
+        line-height: 1.6;
+        text-align: justify;
+        text-justify: inter-word;
+        hyphens: auto;
+      }
+      @media (prefers-color-scheme: light){
+        body{background:#fff;color:#111}
+        .card{background:#f8fafc;border-color:#e2e8f0}
+      }
     </style><div class="card">${body}</div>`);
   }
   function esc(s=""){return s
