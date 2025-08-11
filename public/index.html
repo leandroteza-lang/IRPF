@@ -33,13 +33,14 @@
     input { background: #111827; color: #f9fafb; border-color: #374151; }
     button { background: #2563eb; color: #fff; }
     .pill { border-color: #374151; }
+  }
 
-    /* --- impressão (PDF) --- */
+  /* --- impressão (PDF) --- */
   @media print {
-  body { background: #fff; color: #000; }
-  header .toolbar, .row, small { display: none !important; }
-  #chat { border: none; padding: 0; }
-  .bubble { page-break-inside: avoid; }
+    body { background: #fff; color: #000; }
+    header .toolbar, .row, small { display: none !important; }
+    #chat { border: none; padding: 0; }
+    .bubble { page-break-inside: avoid; }
   }
   </style>
 </head>
@@ -73,6 +74,8 @@
     const resetBtn = document.getElementById('reset');
     const clearBtn = document.getElementById('clear');
     const badge = document.getElementById('threadBadge');
+    const pdfBtn   = document.getElementById('pdf');
+    const shareBtn = document.getElementById('share');
 
     function getThreadId() { return localStorage.getItem('thread_id') || null; }
     function setThreadId(id) {
@@ -121,11 +124,15 @@
           method: 'POST',
           body: JSON.stringify(payload)
         });
-        const data = await res.json();
+
+        // Lê como texto e tenta fazer parse pra mostrar erros reais
+        const raw = await res.text();
+        let data;
+        try { data = JSON.parse(raw); } catch { data = { error: raw }; }
         typing.remove();
 
         if (!res.ok) {
-          addBubble(`Erro: ${data?.error || 'desconhecido'}`, 'assistant');
+          addBubble(`Erro (${res.status}): ${data?.error || 'desconhecido'}`, 'assistant');
           return;
         }
 
@@ -154,6 +161,30 @@
       chat.innerHTML = '';
       addBubble('🧹 Conversa limpa.', 'assistant');
       input.focus();
+    });
+
+    // Salvar PDF (usa a impressão do navegador)
+    pdfBtn?.addEventListener('click', () => {
+      window.print();
+    });
+
+    // Gerar link compartilhável da última resposta do thread
+    shareBtn?.addEventListener('click', async () => {
+      const tid = getThreadId();
+      if (!tid) { addBubble('Não há conversa ativa para compartilhar.', 'assistant'); return; }
+
+      try {
+        const res = await fetch('/api/share', {
+          method: 'POST',
+          body: JSON.stringify({ threadId: tid })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'erro');
+        try { await navigator.clipboard.writeText(data.url); } catch {}
+        addBubble(`Link copiado: ${data.url}`, 'assistant');
+      } catch (e) {
+        addBubble(`Erro ao gerar link: ${e.message || e}`, 'assistant');
+      }
     });
 
     // Init badge
