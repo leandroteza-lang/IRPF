@@ -1,29 +1,40 @@
-// api/share.js — cria link com a última resposta de um thread
+// api/share.js — cria link com a última resposta de um thread (Assistants v2)
 export default async function handler(req, res) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
 
   const base = "https://api.openai.com/v1";
-  const headers = { Authorization: `Bearer ${apiKey}` };
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    "OpenAI-Beta": "assistants=v2" // <-- necessário para Threads/Messages (v2)
+  };
+
   const host = req.headers["x-forwarded-host"] || req.headers.host;
   const proto = req.headers["x-forwarded-proto"] || "https";
   const site = `${proto}://${host}`;
 
+  // POST: retorna a URL pronta para compartilhar (não chama a OpenAI)
   if (req.method === "POST") {
-    const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+    const bodyText = req.body || "{}";
+    const body = typeof bodyText === "string" ? JSON.parse(bodyText) : (bodyText || {});
     const threadId = (body.threadId || "").toString();
     if (!threadId) return res.status(400).json({ error: "threadId is required" });
+
     return res.status(200).json({ url: `${site}/api/share?tid=${encodeURIComponent(threadId)}` });
   }
 
+  // GET: renderiza HTML com a última resposta do assistente naquele thread
   if (req.method === "GET") {
-    const url = new URL(req.url, site);
-    const tid = (url.searchParams.get("tid") || "").toString();
+    const urlObj = new URL(req.url, site);
+    const tid = (urlObj.searchParams.get("tid") || "").toString();
     if (!tid) return html(res, 400, "<p>Parâmetro 'tid' é obrigatório.</p>");
 
+    // Busca as mensagens (ordem desc, pega a última resposta do assistente)
     const r = await fetch(`${base}/threads/${tid}/messages?order=desc&limit=10`, { headers });
     const data = await r.json();
-    if (!r.ok) return html(res, 500, `<pre>${esc(JSON.stringify(data))}</pre>`);
+    if (!r.ok) {
+      return html(res, 500, `<p>Erro ao buscar mensagens.</p><pre>${esc(JSON.stringify(data))}</pre>`);
+    }
 
     let reply = "Sem resposta.";
     const assistantMsg = data?.data?.find?.(m => m.role === "assistant");
@@ -39,6 +50,7 @@ export default async function handler(req, res) {
 
   return res.status(405).json({ error: "Method not allowed" });
 
+  // Helpers
   function html(res, code, body) {
     res.statusCode = code;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -49,6 +61,8 @@ export default async function handler(req, res) {
       @media (prefers-color-scheme: light){body{background:#fff;color:#111}.card{background:#f8fafc;border-color:#e2e8f0}}
     </style><div class="card">${body}</div>`);
   }
-  function esc(s=""){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-                           .replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+  function esc(s=""){return s
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");}
 }
