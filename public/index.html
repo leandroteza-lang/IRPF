@@ -35,16 +35,18 @@
   .muted { opacity: .75; }
   .pill { padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 999px; }
 
-  /* Toast (pop-up) */
+  /* Toast (pop-up) – canto superior direito */
   .toast {
     position: fixed;
     right: 24px;
-    bottom: 24px;
+    top: 24px;         /* topo */
+    bottom: auto;
     background: #111; color: #fff;
     padding: 10px 14px;
     border-radius: 10px;
     box-shadow: 0 10px 25px rgba(0,0,0,.25);
-    opacity: 0; transform: translateY(8px);
+    opacity: 0;
+    transform: translateY(-8px);  /* anima vindo de cima */
     transition: opacity .2s ease, transform .2s ease;
     z-index: 9999;
     pointer-events: none;
@@ -105,9 +107,6 @@
     <p><small>Dica: cada aba tem seu próprio thread. Use "Nova conversa" para iniciar outro.</small></p>
   </main>
 
-  <!-- container do toast (criado dinamicamente pelo JS) -->
-  <!-- (deixamos sem markup; o JS insere quando precisar) -->
-
   <script>
     const chat = document.getElementById('chat');
     const input = document.getElementById('msg');
@@ -158,15 +157,13 @@
       return p;
     }
 
-    // Toast popup (aparece 2.2s no canto inferior direito)
+    // Toast popup (aparece ~2.2s no canto superior direito)
     function toast(msg) {
       const t = document.createElement('div');
       t.className = 'toast';
       t.textContent = msg;
       document.body.appendChild(t);
-      // animação
       requestAnimationFrame(() => t.classList.add('show'));
-      // remove depois
       setTimeout(() => {
         t.classList.remove('show');
         setTimeout(() => t.remove(), 250);
