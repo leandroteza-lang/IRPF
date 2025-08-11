@@ -11,7 +11,18 @@
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
   h1 { font-size: 20px; margin: 0; }
   #chat { display: flex; flex-direction: column; gap: 8px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; min-height: 280px; }
-  .bubble { padding: 12px 14px; border-radius: 12px; margin: 2px 0; line-height: 1.5; white-space: pre-wrap; }
+
+  /* BOLHAS: agora justificadas também na tela */
+  .bubble{
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin: 2px 0;
+    line-height: 1.6;
+    white-space: pre-line;         /* respeita \n, permite justificar */
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
+  }
   .user { background: #eef2ff; color: #111; }
   .assistant { background: #f1f5f9; color: #111; }
   .typing { opacity: 0.7; font-style: italic; }
@@ -41,14 +52,14 @@
     header .toolbar, .row, small { display: none !important; }
     #chat { border: none; padding: 0; }
 
-    /* JUSTIFICAR texto das bolhas no PDF */
-    .bubble {
+    /* Força justificação e melhora a quebra no PDF */
+    .bubble{
       page-break-inside: avoid;
-      text-align: justify;
-      text-justify: inter-word;
-      white-space: pre-line;   /* respeita quebras, mas permite justificar */
+      text-align: justify !important;
+      text-justify: inter-word !important;
+      white-space: pre-line !important;
       hyphens: auto;
-      line-height: 1.55;
+      line-height: 1.6;
     }
   }
   </style>
