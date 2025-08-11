@@ -54,12 +54,9 @@ export default async function handler(req, res) {
   // -------- helpers --------
   function formatLists(text) {
     let t = text;
-    // 1., 2., 3. (apenas quando começam após \n)
-    t = t.replace(/(\n)(\s*)(\d{1,3}\.)\s+/g, (_m, nl, sp, num) => `\n\n${sp}${num} `);
-    // -, *, •
-    t = t.replace(/(\n)(\s*)([-*•])\s+/g, (_m, nl, sp, b) => `\n\n${sp}${b} `);
-    // normaliza \n em excesso
-    t = t.replace(/\n{3,}/g, '\n\n');
+    t = t.replace(/(\n)(\s*)(\d{1,3}\.)\s+/g, (_m, nl, sp, num) => `\n\n${sp}${num} `); // 1., 2., 3.
+    t = t.replace(/(\n)(\s*)([-*•])\s+/g, (_m, nl, sp, b) => `\n\n${sp}${b} `);        // -, *, •
+    t = t.replace(/\n{3,}/g, '\n\n'); // normaliza múltiplos \n
     return t;
   }
 
