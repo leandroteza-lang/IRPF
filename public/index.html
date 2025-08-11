@@ -40,7 +40,16 @@
     body { background: #fff; color: #000; }
     header .toolbar, .row, small { display: none !important; }
     #chat { border: none; padding: 0; }
-    .bubble { page-break-inside: avoid; }
+
+    /* JUSTIFICAR texto das bolhas no PDF */
+    .bubble {
+      page-break-inside: avoid;
+      text-align: justify;
+      text-justify: inter-word;
+      white-space: pre-line;   /* respeita quebras, mas permite justificar */
+      hyphens: auto;
+      line-height: 1.55;
+    }
   }
   </style>
 </head>
