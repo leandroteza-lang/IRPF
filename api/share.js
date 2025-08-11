@@ -39,6 +39,9 @@ export default async function handler(req, res) {
     const textItem = assistantMsg?.content?.find?.(c => c.type === "text");
     if (textItem?.text?.value) reply = textItem.text.value;
 
+    // Aplica a mesma regra de pular linha entre itens de lista
+    reply = formatLists(reply);
+
     return html(res, 200, `
       <h2>Resposta compartilhada</h2>
       <pre>${esc(reply)}</pre>
@@ -48,7 +51,18 @@ export default async function handler(req, res) {
 
   return res.status(405).json({ error: "Method not allowed" });
 
-  // Helpers
+  // -------- helpers --------
+  function formatLists(text) {
+    let t = text;
+    // 1., 2., 3. (apenas quando começam após \n)
+    t = t.replace(/(\n)(\s*)(\d{1,3}\.)\s+/g, (_m, nl, sp, num) => `\n\n${sp}${num} `);
+    // -, *, •
+    t = t.replace(/(\n)(\s*)([-*•])\s+/g, (_m, nl, sp, b) => `\n\n${sp}${b} `);
+    // normaliza \n em excesso
+    t = t.replace(/\n{3,}/g, '\n\n');
+    return t;
+  }
+
   function html(res, code, body) {
     res.statusCode = code;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
