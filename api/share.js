@@ -1,0 +1,54 @@
+// api/share.js — cria link com a última resposta de um thread
+export default async function handler(req, res) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
+
+  const base = "https://api.openai.com/v1";
+  const headers = { Authorization: `Bearer ${apiKey}` };
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  const proto = req.headers["x-forwarded-proto"] || "https";
+  const site = `${proto}://${host}`;
+
+  if (req.method === "POST") {
+    const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+    const threadId = (body.threadId || "").toString();
+    if (!threadId) return res.status(400).json({ error: "threadId is required" });
+    return res.status(200).json({ url: `${site}/api/share?tid=${encodeURIComponent(threadId)}` });
+  }
+
+  if (req.method === "GET") {
+    const url = new URL(req.url, site);
+    const tid = (url.searchParams.get("tid") || "").toString();
+    if (!tid) return html(res, 400, "<p>Parâmetro 'tid' é obrigatório.</p>");
+
+    const r = await fetch(`${base}/threads/${tid}/messages?order=desc&limit=10`, { headers });
+    const data = await r.json();
+    if (!r.ok) return html(res, 500, `<pre>${esc(JSON.stringify(data))}</pre>`);
+
+    let reply = "Sem resposta.";
+    const assistantMsg = data?.data?.find?.(m => m.role === "assistant");
+    const textItem = assistantMsg?.content?.find?.(c => c.type === "text");
+    if (textItem?.text?.value) reply = textItem.text.value;
+
+    return html(res, 200, `
+      <h2>Resposta compartilhada</h2>
+      <pre>${esc(reply)}</pre>
+      <div style="opacity:.7;font-size:12px">Thread: ${esc(tid)}</div>
+    `);
+  }
+
+  return res.status(405).json({ error: "Method not allowed" });
+
+  function html(res, code, body) {
+    res.statusCode = code;
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.end(`<!doctype html><meta charset="utf-8"><style>
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;background:#0b0f12;color:#e5e7eb}
+      .card{max-width:860px;margin:0 auto;border:1px solid #374151;border-radius:12px;padding:16px;background:#111827}
+      pre{white-space:pre-wrap;line-height:1.55}
+      @media (prefers-color-scheme: light){body{background:#fff;color:#111}.card{background:#f8fafc;border-color:#e2e8f0}}
+    </style><div class="card">${body}</div>`);
+  }
+  function esc(s=""){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                           .replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+}
